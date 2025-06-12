@@ -11,6 +11,7 @@ tsugi = 0
 timerCount = 0 # 진행 시간 체크
 noClickTimer = 0  # 클릭 없는 시간 (프레임 단위)
 hisc = 100
+turnCount = 0
 
 cursor_x = 0
 cursor_y = 0
@@ -40,18 +41,18 @@ def key_down(e):
     global index, score, timerCount, tsugi, noClickTimer, blockCount
     if e.keysym == 'Escape':
         answer = tkinter.messagebox.askyesno('종료 확인','게임을 종료하시겠습니까?')
-    if answer:
-        index=0
-        score=0
-        timerCount=0
-        tsugi=0
-        blockCount = [0,0,0,0,0,0,0]
+        if answer:
+            index=0
+            score=0
+            timerCount=0
+            tsugi = 0
+            blockCount = [0,0,0,0,0,0,0]
 
-        # 화면 클리어
-        cvs.delete("NEKO")
-        cvs.delete("CURSOR")
-        cvs.delete("INFO")
-        cvs.delete("OVER")
+            # 화면 클리어
+            cvs.delete("NEKO")
+            cvs.delete("CURSOR")
+            cvs.delete("INFO")
+            cvs.delete("OVER")
 
 def mouse_press(e):
     global mouse_c
@@ -119,7 +120,6 @@ def sweep_neko():
             if neko[y][x] == 7:
                 neko[y][x] = 0  # 빈칸
                 num = num + 1   # 파괴된 블럭 개수를 표현
-    print("blockCount : ",blockCount)
     return num
 
 def drop_neko(): #블럭이 아래로 떨어지는 것
@@ -221,6 +221,7 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
         draw_neko()
     elif index == 5:  # 마우스 입력 대기 / mouse_move(e) => mouse_x / '마우스 커서가 네모 칸 안에 있으면' 조건: 첫 번째 네모 좌표에서 반복적으로 수를 더하면(간격별) 전체 네모칸 선택 가능
         noClickTimer+=1 #0.1초마다 1씩 증가
+        global turnCount
 
         if 24 <= mouse_x and mouse_x < 24 + 72 * 10 and 24 <= mouse_y and mouse_y < 24 + 72 * 12:
             cursor_x = int((mouse_x - 24) / 72)  # 칸 수 만큼 입력 0~ 7
@@ -230,11 +231,19 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
                 set_neko()
                 neko[cursor_y][cursor_x] = tsugi  # 미리 보이는 블럭을 마우스 커서 위치에 넣겠다
                 tsugi = 0
+                turnCount += 1
+                if turnCount%5 == 0:
+                    tsugi = 0
+                else:
+                    tsugi = random.randint(1, difficulty)
+
+
                 index = 2
                 noClickTimer = 0 # 클릭 시 타이머 리셋 
 
         if noClickTimer >= 50:
             set_neko()
+            tsugi = random.randint(1, difficulty)
             index = 2
             noClickTimer = 0 # 클릭 안할 시 타이머 리셋 
 
