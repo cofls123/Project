@@ -1,8 +1,6 @@
+import tkinter.messagebox
 import tkinter
 import random
-
-
-
 
 # 전역 변수
 index = 0
@@ -11,6 +9,7 @@ score = 0
 difficulty = 0
 tsugi = 0
 timerCount = 0 # 진행 시간 체크
+noClickTimer = 0  # 클릭 없는 시간 (프레임 단위)
 hisc = 100
 
 cursor_x = 0
@@ -36,6 +35,24 @@ def mouse_move(e):
     mouse_x = e.x
     mouse_y = e.y
 
+#esc 눌렀을 때 게임 리셋
+def key_down(e):
+    global index, score, timerCount, tsugi, noClickTimer, blockCount
+    if e.keysym == 'Escape':
+        answer = tkinter.messagebox.askyesno('종료 확인','게임을 종료하시겠습니까?')
+    if answer:
+        index=0
+        score=0
+        timerCount=0
+        tsugi=0
+        blockCount = [0,0,0,0,0,0,0]
+
+        # 화면 클리어
+        cvs.delete("NEKO")
+        cvs.delete("CURSOR")
+        cvs.delete("INFO")
+        cvs.delete("OVER")
+
 def mouse_press(e):
     global mouse_c
     mouse_c = 1
@@ -51,12 +68,13 @@ def check_neko():
     global blockCount  # 혹시 모르니 전역변수
     for y in range(12):
         for x in range(10):  # 모든 칸에 대해서 실행
-            check[y][x] = neko[y][x]  # neko -> check (복사) / 위치 체크하는 부분분
+            check[y][x] = neko[y][x]  # neko -> check (복사) / 위치 체크하는 부분
 
     for y in range(1, 11):
         for x in range(10):  # 맨 윗줄와 아래줄을 제외한 모든 칸에 대해서 실행
             if check[y][x] > 0:  # 세로 블럭 => 관련된 모든 블럭을 7(번째 이미지=파괴된 블럭)로 바꿔주기
                 if check[y - 1][x] == check[y][x] and check[y + 1][x] == check[y][x]:
+                    blockCount[neko[y][x]-1] +=3
                     neko[y - 1][x] = 7
                     neko[y][x] = 7
                     neko[y + 1][x] = 7
@@ -74,10 +92,12 @@ def check_neko():
         for x in range(1, 9):
             if check[y][x] > 0:  # 대각선 블럭
                 if check[y - 1][x - 1] == check[y][x] and check[y + 1][x + 1] == check[y][x]:
+                    blockCount[neko[y][x]-1] +=3
                     neko[y - 1][x - 1] = 7
                     neko[y][x] = 7
                     neko[y + 1][x + 1] = 7
                 if check[y + 1][x - 1] == check[y][x] and check[y - 1][x + 1] == check[y][x]:
+                    blockCount[neko[y][x]-1] +=3
                     neko[y + 1][x - 1] = 7
                     neko[y][x] = 7
                     neko[y - 1][x + 1] = 7
@@ -86,6 +106,7 @@ def check_neko():
         for x in range(0, 7):
             if check[y][x] > 0:  # 네모 블럭도 부서질 수 있게 수정하기
                 if check[y + 1][x] == check[y][x] and check[y][x + 1] == check[y][x] and check[y+1][x+1]:
+                    blockCount[neko[y][x]-1] +=4
                     neko[y][x] = 7
                     neko[y][x+1] = 7
                     neko[y + 1][x] = 7
@@ -127,7 +148,7 @@ def draw_txt(txt, x, y, siz, col, tg):
     cvs.create_text(x, y, text=txt, fill=col, font=fnt, tag=tg)
 
 def game_main():  # 0-6개의 구간으로 나눠짐 index
-    global index, timer, score, hisc, difficulty, tsugi
+    global index, timer, score, hisc, difficulty, tsugi, timerCount, noClickTimer
     global cursor_x, cursor_y, mouse_c
     if index == 0:  # 타이틀 로고
         draw_txt("야옹야옹", 312, 240, 100, "violet", "TITLE")
@@ -184,8 +205,11 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
             outFile.close()
 
         sc = sweep_neko()
-        score = score + sc * difficulty * 2
-        if sc > 0:
+        score = score + sc * difficulty * 2 
+        if sc >= 10: # 보너스 점수
+            score += 10
+            
+        if sc > 0: # 원래 점수
             index = 2
         else:
             if over_neko() == False:
@@ -196,6 +220,8 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
                 timer = 0
         draw_neko()
     elif index == 5:  # 마우스 입력 대기 / mouse_move(e) => mouse_x / '마우스 커서가 네모 칸 안에 있으면' 조건: 첫 번째 네모 좌표에서 반복적으로 수를 더하면(간격별) 전체 네모칸 선택 가능
+        noClickTimer+=1 #0.1초마다 1씩 증가
+
         if 24 <= mouse_x and mouse_x < 24 + 72 * 10 and 24 <= mouse_y and mouse_y < 24 + 72 * 12:
             cursor_x = int((mouse_x - 24) / 72)  # 칸 수 만큼 입력 0~ 7
             cursor_y = int((mouse_y - 24) / 72)  # 칸 수 만큼 입력 0~ 9
@@ -205,6 +231,13 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
                 neko[cursor_y][cursor_x] = tsugi  # 미리 보이는 블럭을 마우스 커서 위치에 넣겠다
                 tsugi = 0
                 index = 2
+                noClickTimer = 0 # 클릭 시 타이머 리셋 
+
+        if noClickTimer >= 50:
+            set_neko()
+            index = 2
+            noClickTimer = 0 # 클릭 안할 시 타이머 리셋 
+
         cvs.delete("CURSOR")  # 커서가 지워졌다가 생길 수 있도록
         cvs.create_image(cursor_x * 72 + 60, cursor_y * 72 + 60, image=cursor, tag="CURSOR")  #이미지를 그리고 커서를 입힘
         draw_neko()
@@ -218,12 +251,19 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
     cvs.delete("INFO")
     draw_txt("SCORE " + str(score), 160, 60, 32, "blue", "INFO")
     draw_txt("HISC " + str(hisc), 450, 60, 32, "yellow", "INFO")
+    total = sum(blockCount)
+    draw_txt("BlockCount  " + str(total), 890, 100, 24, "blue", "INFO")
     if tsugi > 0:
         cvs.create_image(890, 260, image=img_neko[tsugi], tag="INFO")
     
     #타이머 카운트 / 게임 시작 시 리셋 되는 부분, 5초 이상 블럭을 배치 안 할때 블럭 내려오게 하기/ 하나의 변수로 사용 추천
-    #timerCount += 0.1
-    root.after(20, game_main)  # 100으로 고쳐주기
+    if index in [2,3,4,5]:
+        timerCount += 1
+        min = timerCount // 60
+        sec = timerCount % 60
+        draw_txt(f"TIME {min:02}:{sec:02}", 890, 60, 24, "white", "INFO")
+    root.after(100, game_main)  # 100으로 고쳐주기
+    
 
 # 메인 영역: tkinter 기본구조 (=> 게임 공간 이미지 한 칸당 10x12로 변경)
 root = tkinter.Tk()
@@ -231,6 +271,7 @@ root.title("블록 낙하 퍼즐 '야옹야옹'")
 root.resizable(False, False)  # 창 크기 변경 불가능
 root.bind("<Motion>", mouse_move)
 root.bind("<ButtonPress>", mouse_press)
+root.bind("<KeyPress>", key_down)
 cvs = tkinter.Canvas(root, width=1056, height=912)  #이미지 사이즈 확인 후 나중에 조정해주기
 cvs.pack()
 
