@@ -1,16 +1,7 @@
-#네모 칸 첫번째 (60,60)
-
 import tkinter
 import random
 
-#최고기록 불러오기
-inFile = open('hiscRecord.txt', 'r')
-inStr = inFile.read()
-if inStr.isdigit():
-    hisc = int(inStr)
-else:
-    hisc = 100
-inFile.close()
+
 
 
 # 전역 변수
@@ -20,6 +11,7 @@ score = 0
 difficulty = 0
 tsugi = 0
 timerCount = 0 # 진행 시간 체크
+hisc = 100
 
 cursor_x = 0
 cursor_y = 0
@@ -29,14 +21,14 @@ mouse_c = 0
 
 
 #공간정보 저장
-neko = [] #리스트
+neko = [] 
 check = []
-for i in range(10):
-    neko.append([0, 0, 0, 0, 0, 0, 0, 0]) #리스트 안쪽에 리스트(2차원 배열) / 8개의 0이 총 10번 반복 / 가로 10개로 바꾸고 싶으면 10개로 바꿔줘야 함 But 이미지 크기 먼저 바꾸고 바바궈주기
-    check.append([0, 0, 0, 0, 0, 0, 0, 0])
+for i in range(12):
+    neko.append([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) # 리스트 안쪽에 리스트(2차원 배열) / 8개의 0이 총 10번 반복 / 가로 10개로 바꾸고 싶으면 10개로 바꿔줘야 함
+    check.append([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0])
 
-#블럭 정보 저장
-blockCount = [0,0,0,0,0,0,0] #조커블럭까지 7개 / 0~5까지 index를 갖고 있음
+# 블럭 정보 저장
+blockCount = [0,0,0,0,0,0,0] # 조커블럭까지 7개 / 0~5까지 index를 갖고 있음
 
 # 함수 영역
 def mouse_move(e):
@@ -50,27 +42,27 @@ def mouse_press(e):
 
 def draw_neko():
     cvs.delete("NEKO")  # 캔버스에서 태그 'NEKO'을 삭제 / 지우고 밑에서 다시 그리는 것을 반복
-    for y in range(10):  # 세로
-        for x in range(8):  # 가로
+    for y in range(12):  # 세로
+        for x in range(10):  # 가로
             if neko[y][x] > 0:  # 모든 칸에 대해서 실행 (80번의 중첩for문) / y에 있는 값 중에 x번째 값 / neko[y]가 변수
                 cvs.create_image(x * 72 + 60, y * 72 + 60, image=img_neko[neko[y][x]], tag="NEKO") #'NEKO' 생성
 
 def check_neko():
     global blockCount  # 혹시 모르니 전역변수
-    for y in range(10):
-        for x in range(8):  # 모든 칸에 대해서 실행
+    for y in range(12):
+        for x in range(10):  # 모든 칸에 대해서 실행
             check[y][x] = neko[y][x]  # neko -> check (복사) / 위치 체크하는 부분분
 
-    for y in range(1, 9):
-        for x in range(8):  # 맨 윗줄와 아래줄을 제외한 모든 칸에 대해서 실행
+    for y in range(1, 11):
+        for x in range(10):  # 맨 윗줄와 아래줄을 제외한 모든 칸에 대해서 실행
             if check[y][x] > 0:  # 세로 블럭 => 관련된 모든 블럭을 7(번째 이미지=파괴된 블럭)로 바꿔주기
                 if check[y - 1][x] == check[y][x] and check[y + 1][x] == check[y][x]:
                     neko[y - 1][x] = 7
                     neko[y][x] = 7
                     neko[y + 1][x] = 7
 
-    for y in range(10):
-        for x in range(1, 7):  # 맨 왼쪽과 맨 오른쪽을 제외한 모든 칸에 대해서 실행
+    for y in range(12):
+        for x in range(1, 9):  # 맨 왼쪽과 맨 오른쪽을 제외한 모든 칸에 대해서 실행
             if check[y][x] > 0:  # 가로 블럭
                 if check[y][x - 1] == check[y][x] and check[y][x + 1] == check[y][x]:
                     blockCount[neko[y][x]-1] +=3 # 블럭 카운트 0번주터 5번으로 하기 위해 -1
@@ -78,8 +70,8 @@ def check_neko():
                     neko[y][x] = 7
                     neko[y][x + 1] = 7
 
-    for y in range(1, 9):
-        for x in range(1, 7):
+    for y in range(1, 11):
+        for x in range(1, 9):
             if check[y][x] > 0:  # 대각선 블럭
                 if check[y - 1][x - 1] == check[y][x] and check[y + 1][x + 1] == check[y][x]:
                     neko[y - 1][x - 1] = 7
@@ -101,8 +93,8 @@ def check_neko():
 
 def sweep_neko():
     num = 0
-    for y in range(10):
-        for x in range(8):  # 모든 칸에 대해서 실행
+    for y in range(12):
+        for x in range(10):  # 모든 칸에 대해서 실행
             if neko[y][x] == 7:
                 neko[y][x] = 0  # 빈칸
                 num = num + 1   # 파괴된 블럭 개수를 표현
@@ -111,8 +103,8 @@ def sweep_neko():
 
 def drop_neko(): #블럭이 아래로 떨어지는 것
     flg = False
-    for y in range(8, -1, -1):  # 아래에서 위로 검사
-        for x in range(8):  #모든 블럭에 대해서 검사
+    for y in range(10, -1, -1):  # 아래에서 위로 검사
+        for x in range(10):  #모든 블럭에 대해서 검사
             if neko[y][x] != 0 and neko[y + 1][x] == 0:  # 아래 블럭이 없을 때 위의 블럭이 아래로 이동
                 neko[y + 1][x] = neko[y][x]
                 neko[y][x] = 0
@@ -120,13 +112,13 @@ def drop_neko(): #블럭이 아래로 떨어지는 것
     return flg
 
 def over_neko():
-    for x in range(8):
+    for x in range(10):
         if neko[0][x] > 0:  # 맨 윗줄에 블럭이 있으면
             return True  # 게임 종료
     return False
 
 def set_neko():
-    for x in range(8):
+    for x in range(10):
         neko[0][x] = random.randint(0, difficulty)  # 블럭을 생성 (0 빈, 1~6 일반블럭)
 
 def draw_txt(txt, x, y, siz, col, tg):
@@ -157,8 +149,15 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
             if 168 < mouse_x and mouse_x < 456 and 672 < mouse_y and mouse_y < 744:
                 difficulty = 6
         if difficulty > 0:
-            for y in range(10):
-                for x in range(8):
+            #최고기록 불러오기
+            inFile = open('hiscRecord.txt', 'r')
+            inStr = inFile.read()
+            if inStr.isdigit():
+                hisc = int(inStr)
+            inFile.close()
+
+            for y in range(12):
+                for x in range(10):
                     neko[y][x] = 0
             mouse_c = 0
             score = 0
@@ -177,7 +176,7 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
         check_neko()
         draw_neko()
         index = 4
-    elif index == 4:  # 나란히 놓인 고양이 블록이 있다면 + 최고기록 갱신
+    elif index == 4:  # 나란히 놓인 고양이 블록이 있다면 + 최고기록 저장
         if score > hisc:
             hisc = score
             outFile = open("hiscRecord.txt", "w")
@@ -186,8 +185,6 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
 
         sc = sweep_neko()
         score = score + sc * difficulty * 2
-        if score > hisc:
-            hisc = score
         if sc > 0:
             index = 2
         else:
@@ -199,7 +196,7 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
                 timer = 0
         draw_neko()
     elif index == 5:  # 마우스 입력 대기 / mouse_move(e) => mouse_x / '마우스 커서가 네모 칸 안에 있으면' 조건: 첫 번째 네모 좌표에서 반복적으로 수를 더하면(간격별) 전체 네모칸 선택 가능
-        if 24 <= mouse_x and mouse_x < 24 + 72 * 8 and 24 <= mouse_y and mouse_y < 24 + 72 * 10:
+        if 24 <= mouse_x and mouse_x < 24 + 72 * 10 and 24 <= mouse_y and mouse_y < 24 + 72 * 12:
             cursor_x = int((mouse_x - 24) / 72)  # 칸 수 만큼 입력 0~ 7
             cursor_y = int((mouse_y - 24) / 72)  # 칸 수 만큼 입력 0~ 9
             if mouse_c == 1:
@@ -222,7 +219,7 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
     draw_txt("SCORE " + str(score), 160, 60, 32, "blue", "INFO")
     draw_txt("HISC " + str(hisc), 450, 60, 32, "yellow", "INFO")
     if tsugi > 0:
-        cvs.create_image(752, 128, image=img_neko[tsugi], tag="INFO")
+        cvs.create_image(890, 260, image=img_neko[tsugi], tag="INFO")
     
     #타이머 카운트 / 게임 시작 시 리셋 되는 부분, 5초 이상 블럭을 배치 안 할때 블럭 내려오게 하기/ 하나의 변수로 사용 추천
     #timerCount += 0.1
