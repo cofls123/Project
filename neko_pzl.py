@@ -74,12 +74,28 @@ def draw_neko():
             if neko[y][x] > 0:  # 모든 칸에 대해서 실행 (80번의 중첩for문) / y에 있는 값 중에 x번째 값 / neko[y]가 변수
                 cvs.create_image(x * 72 + 60, y * 72 + 60, image=img_neko[neko[y][x]], tag="NEKO") #'NEKO' 생성
 
+# 조커 블록의 매칭
 def is_match(a, b):
     if a == 0 or b == 0: # 빈칸은 매칭 제외
         return False
     if a == 8 or b == 8: # 어떤 블록과도 매칭
         return True
     return a == b
+
+# 조커 블록이 있을 때의 나머지 블록들은 같아야 함
+def is_match_three(a, b, c):
+    # a, b, c 중 0이 있으면 안됨
+    if 0 in (a, b, c):
+        return False
+    
+    blocks = [a, b, c]
+    # 조커를 제외한 블럭 리스트
+    filtered = [x for x in blocks if x != 8]
+    
+     # 조커가 포함되어도 조커가 아닌 블록들은 모두 동일해야함
+    first = filtered[0]
+    return all(x == first for x in filtered)
+
 
 def check_neko():
     for y in range(12):
@@ -88,8 +104,8 @@ def check_neko():
 
     for y in range(1, 11):
         for x in range(10):  # 맨 윗줄와 아래줄을 제외한 모든 칸에 대해서 실행
-            if check[y][x] > 0:  # 세로 블럭 => 관련된 모든 블럭을 7(번째 이미지=파괴된 블럭)로 바꿔주기
-                if is_match(check[y - 1][x], check[y][x]) and is_match(check[y + 1][x], check[y][x]):
+            if check[y][x] > 0:  # 세로 블럭
+                if is_match_three(check[y - 1][x], check[y][x], check[y + 1][x]):
                     if neko[y][x] != 8: blockCount[neko[y][x]-1] +=3
                     neko[y - 1][x] = 7
                     neko[y][x] = 7
@@ -98,7 +114,7 @@ def check_neko():
     for y in range(12):
         for x in range(1, 9):  # 맨 왼쪽과 맨 오른쪽을 제외한 모든 칸에 대해서 실행
             if check[y][x] > 0:  # 가로 블럭
-                if is_match(check[y][x - 1], check[y][x]) and is_match(check[y][x + 1], check[y][x]):
+                if is_match_three(check[y][x - 1], check[y][x], check[y][x + 1]):
                     if neko[y][x] != 8: blockCount[neko[y][x]-1] +=3 # 블럭 카운트 0번주터 5번으로 하기 위해 -1
                     neko[y][x - 1] = 7 # 파괴 전 이펙트
                     neko[y][x] = 7
