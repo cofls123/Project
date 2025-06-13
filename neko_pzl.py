@@ -258,9 +258,9 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
             index = 2
         else:
             if not over_neko():
-                if turnCount%5 == 0 and turnCount>0 and not autoPlace: # 5턴 때마다 조커 블럭 등장
-                    tsugi = 8           
-
+                # autoPlace가 True면 조커 등장 조건 무시
+                if not autoPlace and turnCount%5 == 0 and turnCount>0: # 5턴 때마다 조커 블럭 등장
+                    tsugi = 8 # 조커 블록 등장
                 else:
                     tsugi = random.randint(1, difficulty)  
                 index = 5
@@ -287,11 +287,11 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
         if noClickTimer >= 50:
             autoPlace = True
             set_neko()
-            neko[random.randint(0, 11)][random.randint(0, 9)] = tsugi
-            tsugi = 0
-            turnCount += 1
-            index = 2
-            noClickTimer = 0 # 클릭 안할 시 타이머 리셋 
+            if tsugi !=0:
+                neko[random.randint(0, 11)][random.randint(0, 9)] = tsugi
+                tsugi = 0               
+                index = 2
+                noClickTimer = 0 # 클릭 안할 시 타이머 리셋 
         else:
             autoPlace = False
 

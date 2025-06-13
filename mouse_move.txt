@@ -43,3 +43,5 @@ game_main
 index=0에서 difficulty>0으로 넘어갈 때
 blockCount = [0,0,0,0,0,0,0,0]
 timerCount = 0
+
+**blockCount = [0,0,0,0,0,0,0] 이게 맞나
