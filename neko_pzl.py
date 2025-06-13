@@ -10,8 +10,9 @@ difficulty = 0
 tsugi = 0
 timerCount = 0 # 진행 시간 체크
 noClickTimer = 0  # 클릭 없는 시간 (프레임 단위)
-hisc = 100
 turnCount = 0
+autoPlace = False
+jokerHold = False  # 조커 한 턴 유지 여부 체크용 변수
 
 cursor_x = 0
 cursor_y = 0
@@ -19,6 +20,14 @@ mouse_x = 0
 mouse_y = 0
 mouse_c = 0
 
+
+#최고기록 불러오기
+hisc = 100
+inFile = open('hiscRecord.txt', 'r')
+inStr = inFile.read()
+if inStr.isdigit():
+    hisc = int(inStr)
+inFile.close()
 
 #공간정보 저장
 neko = [] 
@@ -28,7 +37,7 @@ for i in range(12):
     check.append([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0])
 
 # 블럭 정보 저장
-blockCount = [0,0,0,0,0,0,0] # 조커블럭까지 7개 / 0~5까지 index를 갖고 있음
+blockCount = [0,0,0,0,0,0,0]
 
 # 함수 영역
 def mouse_move(e):
@@ -38,7 +47,7 @@ def mouse_move(e):
 
 #esc 눌렀을 때 게임 리셋
 def key_down(e):
-    global index, score, timerCount, tsugi, noClickTimer, blockCount
+    global index, score, timerCount, tsugi, noClickTimer, jokerHold
     if e.keysym == 'Escape':
         answer = tkinter.messagebox.askyesno('종료 확인','게임을 종료하시겠습니까?')
         if answer:
@@ -46,7 +55,7 @@ def key_down(e):
             score=0
             timerCount=0
             tsugi = 0
-            blockCount = [0,0,0,0,0,0,0]
+            
 
             # 화면 클리어
             cvs.delete("NEKO")
@@ -65,8 +74,14 @@ def draw_neko():
             if neko[y][x] > 0:  # 모든 칸에 대해서 실행 (80번의 중첩for문) / y에 있는 값 중에 x번째 값 / neko[y]가 변수
                 cvs.create_image(x * 72 + 60, y * 72 + 60, image=img_neko[neko[y][x]], tag="NEKO") #'NEKO' 생성
 
+def is_match(a, b):
+    if a == 0 or b == 0: # 빈칸은 매칭 제외
+        return False
+    if a == 8 or b == 8: # 어떤 블록과도 매칭
+        return True
+    return a == b
+
 def check_neko():
-    global blockCount  # 혹시 모르니 전역변수
     for y in range(12):
         for x in range(10):  # 모든 칸에 대해서 실행
             check[y][x] = neko[y][x]  # neko -> check (복사) / 위치 체크하는 부분
@@ -74,8 +89,8 @@ def check_neko():
     for y in range(1, 11):
         for x in range(10):  # 맨 윗줄와 아래줄을 제외한 모든 칸에 대해서 실행
             if check[y][x] > 0:  # 세로 블럭 => 관련된 모든 블럭을 7(번째 이미지=파괴된 블럭)로 바꿔주기
-                if check[y - 1][x] == check[y][x] and check[y + 1][x] == check[y][x]:
-                    blockCount[neko[y][x]-1] +=3
+                if is_match(check[y - 1][x], check[y][x]) and is_match(check[y + 1][x], check[y][x]):
+                    if neko[y][x] != 8: blockCount[neko[y][x]-1] +=3
                     neko[y - 1][x] = 7
                     neko[y][x] = 7
                     neko[y + 1][x] = 7
@@ -83,8 +98,8 @@ def check_neko():
     for y in range(12):
         for x in range(1, 9):  # 맨 왼쪽과 맨 오른쪽을 제외한 모든 칸에 대해서 실행
             if check[y][x] > 0:  # 가로 블럭
-                if check[y][x - 1] == check[y][x] and check[y][x + 1] == check[y][x]:
-                    blockCount[neko[y][x]-1] +=3 # 블럭 카운트 0번주터 5번으로 하기 위해 -1
+                if is_match(check[y][x - 1], check[y][x]) and is_match(check[y][x + 1], check[y][x]):
+                    if neko[y][x] != 8: blockCount[neko[y][x]-1] +=3 # 블럭 카운트 0번주터 5번으로 하기 위해 -1
                     neko[y][x - 1] = 7 # 파괴 전 이펙트
                     neko[y][x] = 7
                     neko[y][x + 1] = 7
@@ -92,22 +107,22 @@ def check_neko():
     for y in range(1, 11):
         for x in range(1, 9):
             if check[y][x] > 0:  # 대각선 블럭
-                if check[y - 1][x - 1] == check[y][x] and check[y + 1][x + 1] == check[y][x]:
-                    blockCount[neko[y][x]-1] +=3
+                if is_match(check[y - 1][x - 1], check[y][x]) and is_match(check[y + 1][x + 1], check[y][x]):
+                    if neko[y][x] != 8: blockCount[neko[y][x]-1] +=3
                     neko[y - 1][x - 1] = 7
                     neko[y][x] = 7
                     neko[y + 1][x + 1] = 7
-                if check[y + 1][x - 1] == check[y][x] and check[y - 1][x + 1] == check[y][x]:
-                    blockCount[neko[y][x]-1] +=3
+                if is_match(check[y + 1][x - 1], check[y][x]) and is_match(check[y - 1][x + 1], check[y][x]):
+                    if neko[y][x] != 8: blockCount[neko[y][x]-1] +=3
                     neko[y + 1][x - 1] = 7
                     neko[y][x] = 7
                     neko[y - 1][x + 1] = 7
 
-    for y in range(0, 9):
-        for x in range(0, 7):
+    for y in range(0, 11):
+        for x in range(0, 9):
             if check[y][x] > 0:  # 네모 블럭도 부서질 수 있게 수정하기
-                if check[y + 1][x] == check[y][x] and check[y][x + 1] == check[y][x] and check[y+1][x+1]:
-                    blockCount[neko[y][x]-1] +=4
+                if is_match(check[y + 1][x], check[y][x]) and is_match(check[y][x + 1], check[y][x]) and is_match(check[y+1][x+1], check[y][x]):
+                    if neko[y][x] != 8: blockCount[neko[y][x]-1] +=4
                     neko[y][x] = 7
                     neko[y][x+1] = 7
                     neko[y + 1][x] = 7
@@ -149,6 +164,7 @@ def draw_txt(txt, x, y, siz, col, tg):
 
 def game_main():  # 0-6개의 구간으로 나눠짐 index
     global index, timer, score, hisc, difficulty, tsugi, timerCount, noClickTimer
+    global turnCount, blockCount, autoPlace, jokerHold
     global cursor_x, cursor_y, mouse_c
     if index == 0:  # 타이틀 로고
         draw_txt("야옹야옹", 312, 240, 100, "violet", "TITLE")
@@ -170,27 +186,40 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
             if 168 < mouse_x and mouse_x < 456 and 672 < mouse_y and mouse_y < 744:
                 difficulty = 6
         if difficulty > 0:
-            #최고기록 불러오기
-            inFile = open('hiscRecord.txt', 'r')
-            inStr = inFile.read()
-            if inStr.isdigit():
-                hisc = int(inStr)
-            inFile.close()
-
             for y in range(12):
                 for x in range(10):
                     neko[y][x] = 0
+            #리셋 시키는 변수들          
             mouse_c = 0
             score = 0
             tsugi = 0
             cursor_x = 0
             cursor_y = 0
+            turnCount = 0
+            timerCount = 0
+            blockCount = [0,0,0,0,0,0,0]
             set_neko()
             draw_neko()
             cvs.delete("TITLE")
             index = 2
     elif index == 2:  # 블록 낙하
         if drop_neko() == False:
+            # 조커를 일반 블록으로 변환
+            if jokerHold:
+                for y in range(12):
+                    for x in range(10):
+                        if neko[y][x] == 8:
+                            neko[y][x] = random.randint(1, difficulty)
+                jokerHold = False  # 조커 유지 종료
+            else:
+                # 조커가 존재할 시 유지 시작
+                for y in range(12):
+                    for x in range(10):
+                        if neko[y][x] == 8:
+                            jokerHold = True
+                            break
+                    if jokerHold:
+                        break
             index = 3
         draw_neko()
     elif index == 3:  # 나란히 놓인 블록 확인
@@ -212,8 +241,12 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
         if sc > 0: # 원래 점수
             index = 2
         else:
-            if over_neko() == False:
-                tsugi = random.randint(1, difficulty)  
+            if not over_neko():
+                if turnCount%5 == 0 and turnCount>0 and not autoPlace: # 5턴 때마다 조커 블럭 등장
+                    tsugi = 8           
+
+                else:
+                    tsugi = random.randint(1, difficulty)  
                 index = 5
             else:
                 index = 6
@@ -221,7 +254,6 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
         draw_neko()
     elif index == 5:  # 마우스 입력 대기 / mouse_move(e) => mouse_x / '마우스 커서가 네모 칸 안에 있으면' 조건: 첫 번째 네모 좌표에서 반복적으로 수를 더하면(간격별) 전체 네모칸 선택 가능
         noClickTimer+=1 #0.1초마다 1씩 증가
-        global turnCount
 
         if 24 <= mouse_x and mouse_x < 24 + 72 * 10 and 24 <= mouse_y and mouse_y < 24 + 72 * 12:
             cursor_x = int((mouse_x - 24) / 72)  # 칸 수 만큼 입력 0~ 7
@@ -232,20 +264,20 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
                 neko[cursor_y][cursor_x] = tsugi  # 미리 보이는 블럭을 마우스 커서 위치에 넣겠다
                 tsugi = 0
                 turnCount += 1
-                if turnCount%5 == 0:
-                    tsugi = 0
-                else:
-                    tsugi = random.randint(1, difficulty)
-
-
                 index = 2
                 noClickTimer = 0 # 클릭 시 타이머 리셋 
 
+        #시간초과 시 자동 배치      
         if noClickTimer >= 50:
+            autoPlace = True
             set_neko()
-            tsugi = random.randint(1, difficulty)
+            neko[random.randint(0, 11)][random.randint(0, 9)] = tsugi
+            tsugi = 0
+            turnCount += 1
             index = 2
             noClickTimer = 0 # 클릭 안할 시 타이머 리셋 
+        else:
+            autoPlace = False
 
         cvs.delete("CURSOR")  # 커서가 지워졌다가 생길 수 있도록
         cvs.create_image(cursor_x * 72 + 60, cursor_y * 72 + 60, image=cursor, tag="CURSOR")  #이미지를 그리고 커서를 입힘
@@ -289,14 +321,14 @@ bg = tkinter.PhotoImage(file="neko_bg_EX.png")
 cursor = tkinter.PhotoImage(file="neko_cursor.png")
 img_neko = [
     None,
-    tkinter.PhotoImage(file="neko0.png"),
     tkinter.PhotoImage(file="neko1.png"),
     tkinter.PhotoImage(file="neko2.png"),
     tkinter.PhotoImage(file="neko3.png"),
     tkinter.PhotoImage(file="neko4.png"),
     tkinter.PhotoImage(file="neko5.png"),
     tkinter.PhotoImage(file="neko6.png"),
-    tkinter.PhotoImage(file="neko_niku.png")
+    tkinter.PhotoImage(file="neko_niku.png"),
+    tkinter.PhotoImage(file="neko0.png")
 ]  # 블럭 이미지 (조커 블럭 추가하기 / 앞or뒤 따라 코드가 달라짐 *위치 중요)
 
 cvs.create_image(528, 456, image=bg)

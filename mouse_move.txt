@@ -38,3 +38,8 @@ game_main
 6. 게임 오버 -> 0 : timer가 50이 되면
 
 *difficulty 난이도
+
+**한 번 플레이하고 파괴된 블록 개수와 타이머 리셋
+index=0에서 difficulty>0으로 넘어갈 때
+blockCount = [0,0,0,0,0,0,0,0]
+timerCount = 0
