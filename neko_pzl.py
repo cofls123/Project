@@ -258,11 +258,13 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
 
         sc = sweep_neko()
         score = score + sc * difficulty * 2 # 기본 점수
-        # 보너스 점수
-        for i in range(10, total + 1, 10):
-            print(i)
-            score += 10
         
+        # 보너스 점수
+        if total // 10 > bonus_count:
+            score += 10
+            bonus_count += 1
+            print("보너스 10점!")
+                
             
         if sc > 0:
             index = 2
