@@ -11,6 +11,7 @@ tsugi = 0
 timerCount = 0 # 진행 시간 체크
 noClickTimer = 0  # 클릭 없는 시간 (프레임 단위)
 turnCount = 0
+bonusCount = 0  # 지금까지 지급한 보너스 횟수
 autoPlace = False
 jokerHold = False  # 조커 한 턴 유지 여부 체크용 변수
 
@@ -186,7 +187,7 @@ def draw_txt(txt, x, y, siz, col, tg):
 
 def game_main():  # 0-6개의 구간으로 나눠짐 index
     global index, timer, score, hisc, difficulty, tsugi, timerCount, noClickTimer
-    global turnCount, blockCount, autoPlace, jokerHold, total
+    global turnCount, blockCount, autoPlace, jokerHold, total, bonusCount
     global cursor_x, cursor_y, mouse_c
     if index == 0:  # 타이틀 로고
         draw_txt("야옹야옹", 312, 240, 100, "violet", "TITLE")
@@ -260,11 +261,9 @@ def game_main():  # 0-6개의 구간으로 나눠짐 index
         score = score + sc * difficulty * 2 # 기본 점수
         
         # 보너스 점수
-        if total // 10 > bonus_count:
+        if total // 10 > bonusCount:
             score += 10
-            bonus_count += 1
-            print("보너스 10점!")
-                
+            bonusCount += 1               
             
         if sc > 0:
             index = 2
